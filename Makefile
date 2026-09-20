@@ -1,5 +1,8 @@
 APP_DIR := laravel-app
 
+install-laravel:
+	cd $(APP_DIR) && composer create-project --prefer-dist laravel/laravel .
+
 env-prepare:
 	cd $(APP_DIR) && cp -n .env.example .env
 
