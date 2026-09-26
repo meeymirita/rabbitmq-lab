@@ -320,8 +320,8 @@ delivery_mode, message_id, headers…) и один или несколько <co
 Одна очередь может быть привязана к нескольким exchange, а один exchange — к многим очередям. Если одно сообщение подходит под несколько биндингов одной очереди, в очередь оно попадёт <b>один раз</b>.</p>
 <p>Три независимых флага, которые часто путают:</p>
 <ul>
-<li><b>durable queue</b><a class="fnref" href="#term-21" id="ref-21" title="к глоссарию">21</a> — метаданные очереди переживут перезапуск брокера. Не про сообщения!</li>
-<li><b>persistent message</b><a class="fnref" href="#term-20" id="ref-20" title="к глоссарию">20</a> (<code>delivery_mode=2</code>) — сообщение записывается на диск. Бесполезно в non-durable очереди: очередь исчезнет вместе с содержимым.</li>
+<li><b>durable queue</b><a class="fnref" href="#term-18" id="ref-18" title="к глоссарию">18</a> — метаданные очереди переживут перезапуск брокера. Не про сообщения!</li>
+<li><b>persistent message</b><a class="fnref" href="#term-19" id="ref-19" title="к глоссарию">19</a> (<code>delivery_mode=2</code>) — сообщение записывается на диск. Бесполезно в non-durable очереди: очередь исчезнет вместе с содержимым.</li>
 <li><b>publisher confirm</b> — брокер сообщил издателю, что взял ответственность за сообщение (для persistent — после записи на диск).</li>
 </ul>
 <p>Только все три вместе дают «сообщение не потеряется при рестарте брокера». И даже так остаётся окно: брокер пишет на диск батчами (fsync раз в несколько сотен миллисекунд), а confirm приходит после fsync — вот почему confirm может «задержаться».</p>
@@ -331,7 +331,7 @@ delivery_mode, message_id, headers…) и один или несколько <co
 <tr><th>Что</th><th>Где живёт</th><th>Примеры</th></tr>
 <tr><td>Body</td><td>тело, байты; брокеру безразлично содержимое</td><td>JSON заказа</td></tr>
 <tr><td>Properties (фиксированный набор)</td><td>header frame</td><td><code>content_type</code>, <code>delivery_mode</code>, <code>priority</code>, <code>message_id</code>, <code>timestamp</code>, <code>expiration</code>, <code>correlation_id</code>, <code>reply_to</code></td></tr>
-<tr><td>Headers (произвольные)<a class="fnref" href="#term-18" id="ref-18" title="к глоссарию">18</a></td><td>свойство <code>headers</code> — таблица ключ→значение</td><td><code>x-retry-count</code>, <code>x-last-error</code>, <code>x-death</code> (ставит брокер)</td></tr>
+<tr><td>Headers (произвольные)<a class="fnref" href="#term-20" id="ref-20" title="к глоссарию">20</a></td><td>свойство <code>headers</code> — таблица ключ→значение</td><td><code>x-retry-count</code>, <code>x-last-error</code>, <code>x-death</code> (ставит брокер)</td></tr>
 </table>
 <p>Свойства сообщение несёт с собой везде: в retry-очередь, в DLX, при redelivery. Поэтому <code>message_id</code>, выставленный один раз в relay, доедет до любого consumer'а — на этом держится идемпотентность.</p>
 
@@ -429,7 +429,7 @@ delivery_mode, message_id, headers…) и один или несколько <co
 <tr><td>API + доменная логика</td><td>Laravel 13 (PHP 8.4)</td><td>уже знаком; воркеры тоже живут здесь как Artisan-команды</td></tr>
 <tr><td>Низкоуровневый AMQP</td><td>php-amqplib/php-amqplib ^3.7</td><td>ручной ack/nack/prefetch/confirms</td></tr>
 <tr><td>Jobs-слой (сравнение)</td><td>vladimir-yuldashev/laravel-queue-rabbitmq ^15</td><td>показать «удобный» путь через Laravel Queue</td></tr>
-<tr><td>БД</td><td>PostgreSQL 16</td><td>orders, outbox, processed_messages, order_events</td></tr>
+<tr><td>БД</td><td>PostgreSQL 16</td><td>orders, outbox_messages, processed_messages, order_events</td></tr>
 <tr><td>Брокер</td><td>rabbitmq:4-management</td><td>UI на :15672; топология импортируется из definitions.json</td></tr>
 <tr><td>Почта</td><td>axllent/mailpit</td><td>SMTP :1025, веб-ящик :8025, есть HTTP API для проверок</td></tr>
 </table>
@@ -660,7 +660,7 @@ cd rabbitmq-lab</code></pre>
 <div class="why"><b>Зачем:</b> вся топология описана декларативно и поднимается вместе с брокером. Воркеры ничего не declare'ят — только consume/publish. Пользователей здесь нет намеренно: их создаст env из docker-compose.</div>
 <details class="deep"><summary>🔬 Под капотом: аргументы очереди неизменяемы, classic vs quorum, кто «владеет» топологией</summary><div class="deep-body">
 <p><b>Аргументы нельзя поменять.</b> Если очередь <code>email.retry.1</code> уже существует с TTL 10000, а вы попробуете объявить её с TTL 5000 — получите <code>PRECONDITION_FAILED - inequivalent arg 'x-message-ttl'</code> и канал закроется. Единственный путь — удалить очередь и создать заново (<code>docker compose down -v</code> сносит и данные, и определения). В проде для гибкости используют <b>policies</b>: TTL/DLX задаются политикой по паттерну имени, а не аргументом очереди, и их можно менять на лету. Для лабы аргументы нагляднее.</p>
-<p><b>Classic vs quorum.</b> В RabbitMQ 4 по умолчанию рекомендуются quorum-очереди (реплицируемые через Raft, для кластера). Мы явно указываем <code>classic</code>, потому что: (а) один узел, репликация не нужна; (б) quorum-очереди поддерживают приоритеты ограниченно; (в) поведение TTL/DLX у classic проще для понимания. Разница — в разделе 13.</p>
+<p><b>Classic vs quorum.</b> В RabbitMQ 4 по умолчанию рекомендуются quorum-очереди (реплицируемые через Raft, для кластера). Мы явно указываем <code>classic</code>, потому что: (а) один узел, репликация не нужна; (б) quorum-очереди не поддерживают приоритетные очереди (<code>x-max-priority</code>) вообще; (в) поведение TTL/DLX у classic проще для понимания. Разница — в разделе 13.</p>
 <p><b>Кто владеет топологией.</b> Три подхода: объявляет издатель (плохо — издатель не знает про consumer'ов), объявляет consumer (частая практика — «я знаю, что мне нужно»), или топология в конфиге/definitions/IaC (наш выбор — как в проде с Terraform). При импорте definitions уже существующие объекты с теми же параметрами пропускаются, с другими — ошибка.</p>
 <p><b>Пустой routing_key у fanout-биндингов</b> — не ошибка: fanout его игнорирует, но поле в JSON обязательно.</p>
 </div></details>
@@ -745,7 +745,7 @@ RUN apt-get update &amp;&amp; apt-get install -y git unzip libpq-dev libzip-dev 
  &amp;&amp; rm -rf /var/lib/apt/lists/*
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www</code></pre>
-<div class="why"><b>Зачем:</b> <code>sockets</code> нужен php-amqplib, <code>pcntl</code> — для перехвата SIGTERM (graceful shutdown<a class="fnref" href="#term-19" id="ref-19" title="к глоссарию">19</a>), <code>pdo_pgsql</code> — очевидно. Код монтируется volume'ом, образ пересобирать при правках не нужно.</div>
+<div class="why"><b>Зачем:</b> <code>sockets</code> нужен php-amqplib, <code>pcntl</code> — для перехвата SIGTERM (graceful shutdown<a class="fnref" href="#term-21" id="ref-21" title="к глоссарию">21</a>), <code>pdo_pgsql</code> — очевидно. Код монтируется volume'ом, образ пересобирать при правках не нужно.</div>
 <details class="deep"><summary>🔬 Под капотом: почему php-cli, а не php-fpm, и что делает install:api</summary><div class="deep-body">
 <p>Воркеры — долгоживущие CLI-процессы, им нужен именно <code>php-cli</code>: без ограничения <code>max_execution_time</code>, с доступом к <code>pcntl</code> (в fpm/apache он отключён по соображениям безопасности). Один и тот же образ для API (через <code>artisan serve</code>) и для воркеров — упрощение для лабы; в проде API живёт за nginx+php-fpm, а воркеры — в отдельном cli-образе.</p>
 <p><code>install:api</code> в Laravel 11+ создаёт <code>routes/api.php</code>, регистрирует его в <code>bootstrap/app.php</code> и ставит Sanctum. Sanctum нам не нужен, но не мешает.</p>
@@ -1322,7 +1322,7 @@ docker compose exec app php artisan lab:orders 1000
 <details class="deep"><summary>🔬 Под капотом: как выбрать prefetch, и что такое «консьюмер-заложник»</summary><div class="deep-body">
 <p>Формула из практики: <code>prefetch ≈ (round-trip до брокера) / (время обработки) × запас</code>. Если обработка 50 мс, а сеть 1 мс — prefetch=1 уже почти не теряет пропускной способности (воркер ждёт нового сообщения 2% времени). Если обработка 1 мс (аналитика), prefetch=1 удвоит время на каждое сообщение — тут нужны 50–100. Правило: <b>чем дольше обработка, тем меньше prefetch</b>.</p>
 <p>Prefetch — это ещё и <b>размер потерь при краше</b>: все unacked вернутся в очередь и будут обработаны заново (с проверкой идемпотентности). При prefetch=100 и падении — 100 повторов.</p>
-<p>«Заложники»: медленный воркер с prefetch=100 забрал 100 сообщений, обрабатывает по 200 мс = 20 секунд, а два быстрых воркера стоят с пустой очередью. Consumer utilisation очереди при этом низкая. Лечится маленьким prefetch или (в RabbitMQ 3.8+) <b>consumer priority</b>: медленному — ниже приоритет, брокер отдаёт ему сообщения, только когда быстрые заняты.</p>
+<p>«Заложники»: медленный воркер с prefetch=100 забрал 100 сообщений, обрабатывает по 200 мс = 20 секунд, а два быстрых воркера стоят с пустой очередью. Consumer utilisation очереди при этом низкая. Лечится маленьким prefetch или (начиная с RabbitMQ 3.2) <b>consumer priority</b>: медленному — ниже приоритет, брокер отдаёт ему сообщения, только когда быстрые заняты.</p>
 </div></details>
 <div class="next-box"><span class="tag">ПЕРЕД ШАГОМ 4.3</span><ul>
 <li>📖 Почитать: <a href="https://www.rabbitmq.com/docs/confirms#automatic-requeueing" target="_blank">Automatic Requeueing</a> — когда брокер возвращает unacked.</li>
@@ -1336,7 +1336,8 @@ docker compose kill order-worker          # UI: Unacked → снова Ready, ф
 docker compose up -d order-worker         # в логах: "(REDELIVERED)"
 
 # 2) точно: падение ПОСЛЕ коммита, но ДО ack
-LAB_CRASH_BEFORE_ACK=true docker compose up -d --force-recreate order-worker
+# правим .env (LAB_CRASH_BEFORE_ACK=true) — env_file побеждает shell-переменную, см. шаг 1.6
+docker compose up -d --force-recreate order-worker
 docker compose exec app php artisan lab:orders 1
 docker compose logs order-worker          # "CRASH before ack" → контейнер рестартует →
                                           # "(REDELIVERED)" → "duplicate → ack без обработки"
@@ -1364,7 +1365,8 @@ t=7     воркер: SELECT processed_messages → есть → ack(1)
 </div></div>
 
 <div class="step" id="step-5-1"><span class="step-head"><label class="done-label" title="Отметить шаг пройденным"><input type="checkbox" class="done" data-key="step-5-1"></label><span class="num">Шаг 5.1</span>Ломаем почту<a class="anchor" href="#step-5-1">#</a></span><div class="step-body">
-<pre><code>LAB_SIMULATE_SMTP_FAILURE=true docker compose up -d --force-recreate email-worker
+<pre><code># правим .env (LAB_SIMULATE_SMTP_FAILURE=true), затем:
+docker compose up -d --force-recreate email-worker
 docker compose exec app php artisan lab:orders 1
 docker compose logs email-worker    # "✖ SMTP server unavailable → nack(requeue=false)"</code></pre>
 <div class="why"><b>Зачем:</b> базовый <code>onFailure</code> делает <code>nack(requeue=false)</code>, а у <code>email.queue</code> DLX нет — сообщение <b>исчезло</b>. Осознанная демонстрация: nack без DLX = потеря. Поставьте временно <code>requeue: true</code> — получите бесконечный цикл с redelivered=true. Оба варианта плохи, поэтому — шаг 5.2.</div>
@@ -1409,7 +1411,8 @@ docker compose exec app php artisan lab:orders 1
 # UI → Queues: сообщение "живёт" в email.retry.1 ровно 10 сек, возвращается в email.queue,
 # снова падает, уходит в email.retry.2 на 30 сек, потом retry.3 на 5 мин, потом email.dlq.
 # Итого до DLQ ≈ 5 мин 40 сек. На время экспериментов TTL retry.3 можно уменьшить в definitions.json
-# (docker compose down -v &amp;&amp; up — определения перечитаются).</code></pre>
+# (docker compose restart rabbitmq — definitions.json это bind-mount, перечитается и без down -v,
+#  который заодно снёс бы volume postgres со всеми orders/outbox_messages).</code></pre>
 <div class="why"><b>Зачем:</b> см. раздел 7. В UI откройте сообщение в <code>email.retry.2</code> (Get messages, requeue=true) и посмотрите заголовки <code>x-retry-count</code>, <code>x-last-error</code> и автоматический <code>x-death</code>.</div>
 <details class="deep"><summary>🔬 Под капотом: <code>$headers + [...]</code>, x-death, что теряется при копировании и когда x-death лучше своего счётчика</summary><div class="deep-body">
 <p><code>$headers + [...]</code> в PHP — объединение с приоритетом <b>левого</b> операнда для одинаковых ключей. Здесь это специально: новые значения <code>x-retry-count</code> и <code>x-last-error</code> перезапишут старые только потому, что мы… стоп. Проверьте: с <code>+</code> старый <code>x-retry-count</code> из <code>$headers</code> победит, и счётчик не вырастет. Нужен <code>array_merge($headers, [...])</code> или <code>[...] + $headers</code>. Оставляю это как первую «ловушку»: запустите, увидите в UI, что <code>x-retry-count</code> застрял на 1 и сообщение крутится retry.1 → queue → retry.1 бесконечно, — и исправьте. Так ошибка запомнится лучше, чем правильный код.</p>
@@ -1595,10 +1598,10 @@ docker compose exec app php artisan lab:broadcast "Техработы в 03:00"<
 <p class="glossary-item" id="term-15"><b>15. Идемпотентность</b> <a class="back" href="#ref-15" title="к первому упоминанию">↩</a> — свойство обработчика: повторная обработка того же сообщения (из-за redelivery) не даёт повторного эффекта. Реализуется маркером «уже обработано» в той же транзакции, что и эффект, с уникальным индексом.</p>
 <p class="glossary-item" id="term-16"><b>16. Redelivery</b> <a class="back" href="#ref-16" title="к первому упоминанию">↩</a> — повторная доставка сообщения брокером, если предыдущая попытка не завершилась ACK (consumer упал, соединение оборвалось, nack с requeue=true). Брокер ставит флаг <code>redelivered=true</code>.</p>
 <p class="glossary-item" id="term-17"><b>17. Binding</b> <a class="back" href="#ref-17" title="к первому упоминанию">↩</a> — правило «exchange → очередь» с routing key или паттерном (<code>order.*</code>), по которому сообщение попадает в очередь.</p>
-<p class="glossary-item" id="term-18"><b>18. Message headers</b> <a class="back" href="#ref-18" title="к первому упоминанию">↩</a> — произвольные пары ключ-значение при сообщении (как HTTP-заголовки): счётчик попыток, trace-id, текст последней ошибки. RabbitMQ сам добавляет <code>x-death</code> при dead-lettering.</p>
-<p class="glossary-item" id="term-19"><b>19. Graceful shutdown</b> <a class="back" href="#ref-19" title="к первому упоминанию">↩</a> — корректная остановка воркера: дообработать текущее сообщение, ack'нуть, закрыть канал и соединение, и только потом выйти. Достигается перехватом SIGTERM.</p>
-<p class="glossary-item" id="term-20"><b>20. Persistent message</b> <a class="back" href="#ref-20" title="к первому упоминанию">↩</a> — сообщение с <code>delivery_mode=2</code>: брокер пишет его на диск. Без durable-очереди бесполезно — нужны оба флага.</p>
-<p class="glossary-item" id="term-21"><b>21. Durable queue</b> <a class="back" href="#ref-21" title="к первому упоминанию">↩</a> — очередь с <code>durable=true</code>: переживает перезапуск брокера. Сообщения в ней сохранятся, только если они persistent.</p>
+<p class="glossary-item" id="term-18"><b>18. Durable queue</b> <a class="back" href="#ref-18" title="к первому упоминанию">↩</a> — очередь с <code>durable=true</code>: переживает перезапуск брокера. Сообщения в ней сохранятся, только если они persistent.</p>
+<p class="glossary-item" id="term-19"><b>19. Persistent message</b> <a class="back" href="#ref-19" title="к первому упоминанию">↩</a> — сообщение с <code>delivery_mode=2</code>: брокер пишет его на диск. Без durable-очереди бесполезно — нужны оба флага.</p>
+<p class="glossary-item" id="term-20"><b>20. Message headers</b> <a class="back" href="#ref-20" title="к первому упоминанию">↩</a> — произвольные пары ключ-значение при сообщении (как HTTP-заголовки): счётчик попыток, trace-id, текст последней ошибки. RabbitMQ сам добавляет <code>x-death</code> при dead-lettering.</p>
+<p class="glossary-item" id="term-21"><b>21. Graceful shutdown</b> <a class="back" href="#ref-21" title="к первому упоминанию">↩</a> — корректная остановка воркера: дообработать текущее сообщение, ack'нуть, закрыть канал и соединение, и только потом выйти. Достигается перехватом SIGTERM.</p>
 </div>
 
 <h2 id="sec-12"><label class="done-label" title="Отметить раздел пройденным"><input type="checkbox" class="done" data-key="sec-12"></label>12. Вопросы для самопроверки / собеседования <a class="anchor" href="#sec-12">#</a></h2>
