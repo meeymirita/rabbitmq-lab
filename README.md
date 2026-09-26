@@ -2,7 +2,7 @@
 
 ![RabbitMQ](rabbitmq.png)
 
-> **26.09.2026 — методичка вычитана и исправлена.** Что найдено и что поправлено — в [fixes/rabbitmq.md](https://github.com/meeymirita/submodule-group-lab/blob/main/fixes/rabbitmq.md) сборного репозитория.
+> **26.09.2026 — методичка вычитана и исправлена.** Что найдено и что поправлено — в [fixes/rabbitmq.md](https://github.com/meeymirita/lab-fixes/blob/main/rabbitmq.md) репозитория `lab-fixes`.
 
 **Статус: ✅ выполнена (все 3 сессии).**
 **Сложность: высокая.** Нужен уверенный Laravel/PHP (транзакции, Artisan-команды, очереди хотя бы на уровне концепции), базовые транзакции SQL, Docker Compose «запустить и посмотреть логи».
