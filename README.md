@@ -13,7 +13,7 @@
 
 ## Стек
 
-Laravel 13 (PHP 8.4) + PostgreSQL 16 + RabbitMQ (Management UI) + Mailpit, всё в Docker Compose.
+Laravel 13 (PHP 8.4) + PostgreSQL 18 + RabbitMQ (Management UI) + Mailpit, всё в Docker Compose.
 
 ## Архитектура
 
