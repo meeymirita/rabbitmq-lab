@@ -1,6 +1,6 @@
 # RabbitMQ Lab — Transactional Outbox, воркеры, DLQ
 
-![RabbitMQ](https://meeymirita-files.storage.yandexcloud.net/rabbitmq/rabbitmq.png)
+![RabbitMQ](https://raw.githubusercontent.com/meeymirita/works-lab/main/images/rabbitmq.png)
 
 > **26.09.2026 — методичка вычитана и исправлена.** Что найдено и что поправлено — в [fixes/backend/rabbitmq.md](https://github.com/meeymirita/lab-fixes/blob/main/backend/rabbitmq.md) репозитория `lab-fixes`.
 
