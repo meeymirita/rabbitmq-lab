@@ -34,7 +34,7 @@ HTTP-запрос создаёт заказ и **сразу** пишет "зап
 
 ## Где что искать
 
-Полная методичка со всеми шагами, объяснениями и заданиями — в [`docs/RabbitMQ_Lab_Plan_v1_pro_max.html`](docs/RabbitMQ_Lab_Plan_v1_pro_max.html) (открывается в браузере).
+Полная методичка со всеми шагами, объяснениями и заданиями — в [`docs/rabbitmq.html`](rabbitmq.html) (открывается в браузере).
 
 - рабочий код всех воркеров и команд — `laravel-app/app/Console/Commands/`
 - пошаговый разбор пути заказа (хопы, точки наблюдения, что смотреть в БД/UI/логах) — [`docs/order-path-explained.md`](docs/order-path-explained.md)
