@@ -1,7 +1,7 @@
 # Справочные материалы — RabbitMQ Lab
 
 Ссылки, собранные по ходу лабы, сгруппированные по темам (см. также
-[план лабы](RabbitMQ_Lab_Plan_v1_pro_max.html), [разбор пути заказа](order-path-explained.md)
+[план лабы](../rabbitmq.html), [разбор пути заказа](order-path-explained.md)
 и [ответы на вопросы для самопроверки](self-check-answers.md)).
 
 ## Видео-введение

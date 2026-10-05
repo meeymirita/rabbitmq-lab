@@ -34,12 +34,16 @@ HTTP-запрос создаёт заказ и **сразу** пишет "зап
 
 ## Где что искать
 
-Полная методичка со всеми шагами, объяснениями и заданиями — в [`docs/rabbitmq.html`](rabbitmq.html) (открывается в браузере).
+Полная методичка со всеми шагами, объяснениями и заданиями — в [`rabbitmq.html`](rabbitmq.html) ([открыть на сайте](https://anitech.meeymirita.ru/works/rabbitmq.html)) (открывается в браузере).
 
 - рабочий код всех воркеров и команд — `laravel-app/app/Console/Commands/`
 - пошаговый разбор пути заказа (хопы, точки наблюдения, что смотреть в БД/UI/логах) — [`docs/order-path-explained.md`](docs/order-path-explained.md)
 - ответы на все 18 вопросов для самопроверки, привязанные к коду проекта — [`docs/self-check-answers.md`](docs/self-check-answers.md)
 - подборка справочных материалов по темам лабы — [`docs/rabbit.md`](docs/rabbit.md)
+
+## Лицензия и авторство
+
+Код — MIT, тексты — CC BY 4.0, обложки и иллюстрации не покрыты (см. [LICENSE](LICENSE)). Кто что сделал: [NOTICE](NOTICE).
 
 ---
 
